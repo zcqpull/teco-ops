@@ -5,8 +5,8 @@
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 //
-// 1. Redistributions of source code must retain the above copyright notice,
-//    this list of conditions and the following disclaimer.
+// 1. Redistributions of source code must retain the above copyright notice, this
+//    list of conditions and the following disclaimer.
 //
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
@@ -27,49 +27,41 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef TECOOPS_UAL_COM_DEF_H_
-#define TECOOPS_UAL_COM_DEF_H_
+#include "ual/ops/memset/memset.hpp"
+#include "interface/common/convert.h"
+#include "interface/common/macro.h"
+#include "interface/include/builtin_type.h"
+#include "interface/include/tecoops.h"
+#include "ual/args/memset_args.h"
 
-#include "ual/com/status.h"
+using tecoops::Convert;
+using tecoops::ual::args::MemsetArgs;
+using tecoops::ual::ops::MemsetOp;
 
-namespace tecoops {
-namespace ual {
-namespace common {
+static tecoopsStatus_t checkMemsetInput(tecoopsHandle_t handle, void* x, const int value,
+                                        size_t size) {
+    if (handle == NULL) {
+        return TECOOPS_STATUS_BAD_PARAM;
+    }
+    if (x == NULL) {
+        return TECOOPS_STATUS_BAD_PARAM;
+    }
+    return TECOOPS_STATUS_SUCCESS;
+}
 
-typedef enum {
-    UAL_DTYPE_FLOAT = 0,
-    UAL_DTYPE_HALF = 1,
-    UAL_DTYPE_INT8 = 2,
-    UAL_DTYPE_INT16 = 3,
-    UAL_DTYPE_INT32 = 4,
-    UAL_DTYPE_INT64 = 5,
-    UAL_DTYPE_UINT8 = 6,
-    UAL_DTYPE_BOOL = 7,
-    UAL_DTYPE_DOUBLE = 8,
-    UAL_DTYPE_UINT16 = 9,
-    UAL_DTYPE_UINT32 = 10,
-    UAL_DTYPE_UINT64 = 11,
-    UAL_DTYPE_COMPLEX_FLOAT = 12,
-    UAL_DTYPE_COMPLEX_HALF = 13,
-    UAL_DTYPE_COMPLEX_DOUBLE = 14,
-    UAL_DTYPE_BFLOAT16 = 15,
-} UALDataType;
+tecoopsStatus_t tecoopsMemset(tecoopsHandle_t handle, void* x, const int value, size_t size) {
+    // check input
+    tecoopsStatus_t input_error = checkMemsetInput(handle, x, value, size);
+    if (input_error != TECOOPS_STATUS_SUCCESS)
+        return input_error;
 
-typedef enum {
-    ALGO_0 = 0,
-    ALGO_1,
-    ALGO_2,
-    ALGO_3,
-    ALGO_4,
-    ALGO_5,
-    ALGO_6,
-    ALGO_7,
-    ALGO_8,
-    ALGO_9,
-} UALAlgoType;
+    MemsetArgs mem_arg;
 
-}  // namespace common
-}  // namespace ual
-}  // namespace tecoops
+    mem_arg.spe_num = handle->spe_num;
+    mem_arg.data_size = size;
+    mem_arg.value = value;
+    mem_arg.x = x;
 
-#endif  // TECOOPS_UAL_COM_DEF_H_
+    RUN_OP(MemsetOp, mem_arg, mem_arg, handle);
+    return TECOOPS_STATUS_SUCCESS;
+}

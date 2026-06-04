@@ -5,8 +5,8 @@
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 //
-// 1. Redistributions of source code must retain the above copyright notice,
-//    this list of conditions and the following disclaimer.
+// 1. Redistributions of source code must retain the above copyright notice, this
+//    list of conditions and the following disclaimer.
 //
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
@@ -27,49 +27,37 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef TECOOPS_UAL_COM_DEF_H_
-#define TECOOPS_UAL_COM_DEF_H_
+#ifndef ZOO_TECO_REDUCE_VARIANCE_REDUCE_VARIANCE_H_  // NOLINT
+#define ZOO_TECO_REDUCE_VARIANCE_REDUCE_VARIANCE_H_
 
-#include "ual/com/status.h"
+#include "interface/include/tecoops.h"
+#include "zoo/teco/executor.h"
 
-namespace tecoops {
-namespace ual {
-namespace common {
 
-typedef enum {
-    UAL_DTYPE_FLOAT = 0,
-    UAL_DTYPE_HALF = 1,
-    UAL_DTYPE_INT8 = 2,
-    UAL_DTYPE_INT16 = 3,
-    UAL_DTYPE_INT32 = 4,
-    UAL_DTYPE_INT64 = 5,
-    UAL_DTYPE_UINT8 = 6,
-    UAL_DTYPE_BOOL = 7,
-    UAL_DTYPE_DOUBLE = 8,
-    UAL_DTYPE_UINT16 = 9,
-    UAL_DTYPE_UINT32 = 10,
-    UAL_DTYPE_UINT64 = 11,
-    UAL_DTYPE_COMPLEX_FLOAT = 12,
-    UAL_DTYPE_COMPLEX_HALF = 13,
-    UAL_DTYPE_COMPLEX_DOUBLE = 14,
-    UAL_DTYPE_BFLOAT16 = 15,
-} UALDataType;
+namespace optest {
 
-typedef enum {
-    ALGO_0 = 0,
-    ALGO_1,
-    ALGO_2,
-    ALGO_3,
-    ALGO_4,
-    ALGO_5,
-    ALGO_6,
-    ALGO_7,
-    ALGO_8,
-    ALGO_9,
-} UALAlgoType;
+class ReduceVarianceExecutor : public TecoExecutor {
+ public:
+    ReduceVarianceExecutor() {}
+    ~ReduceVarianceExecutor() {}
 
-}  // namespace common
-}  // namespace ual
-}  // namespace tecoops
+    void paramCheck();
+    void paramParse();
+    void paramGeneration();
+    void compute();
+    void cpuCompute();
+    void gpuCompute();
+    int64_t getTheoryOps() override;
+    int64_t getTheoryIoSize() override;
 
-#endif  // TECOOPS_UAL_COM_DEF_H_
+ private:
+    int axis_ = 0;
+    int correction_ = 0;
+    tecoopsTensorDescriptor_t xDesc_;
+    const void *x_;
+    tecoopsTensorDescriptor_t yDesc_;
+    void *y_;
+};
+};  // namespace optest
+
+#endif  // ZOO_TECO_REDUCE_VARIANCE_REDUCE_VARIANCE_H_  // NOLINT

@@ -30,10 +30,13 @@
 #include <type_traits>
 #include <cassert>
 #include "ual/com/log.h"
+#include "ual/com/status.h"
 
 namespace tecoops {
 namespace ual {
 namespace ops {
+
+using tecoops::ual::common::Status;
 
 #define RUN_KERNEL(func_ptr, stream_id, arg) \
     ({                                       \
