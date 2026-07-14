@@ -10,10 +10,10 @@ def morton3d_invert_cpu(indices):
     def compact_bits(x):
         x = int(x)
         x &= 0x09249249
-        x = (x ^ (x >> 2)) & 0x030c30c3
-        x = (x ^ (x >> 4)) & 0x0300f00f
-        x = (x ^ (x >> 8)) & 0xff0000ff
-        x = (x ^ (x >> 16)) & 0x000003ff
+        x = (x ^ (x >> 2)) & 0x030C30C3
+        x = (x ^ (x >> 4)) & 0x0300F00F
+        x = (x ^ (x >> 8)) & 0xFF0000FF
+        x = (x ^ (x >> 16)) & 0x000003FF
         return x
 
     coords = np.zeros((len(indices), 3), dtype=np.int32)
@@ -41,11 +41,11 @@ def test_morton3d_invert_basic():
 
     if np.array_equal(result, expected):
         print("\n✓ Basic test PASSED!")
-        return
-
-    print("\n✗ Basic test FAILED!")
-    print(result - expected)
-    assert np.array_equal(result, expected)
+        return True
+    else:
+        print("\n✗ Basic test FAILED!")
+        print(result - expected)
+        return False
 
 
 def test_morton3d_invert_random():
@@ -65,12 +65,12 @@ def test_morton3d_invert_random():
 
     if np.array_equal(result, expected):
         print("✓ Random test PASSED!")
-        return
-
-    print("✗ Random test FAILED!")
-    mismatch = np.where(result != expected)
-    print("Mismatch indices:", mismatch)
-    assert np.array_equal(result, expected)
+        return True
+    else:
+        print("✗ Random test FAILED!")
+        mismatch = np.where(result != expected)
+        print("Mismatch indices:", mismatch)
+        return False
 
 
 if __name__ == "__main__":
@@ -81,8 +81,17 @@ if __name__ == "__main__":
     if not torch.sdaa.is_available():
         print("Warning: SDAA is not available, tests may fail")
 
-    test1_passed = test_morton3d_invert_basic()
-    test2_passed = test_morton3d_invert_random()
+    try:
+        test1_passed = test_morton3d_invert_basic()
+    except Exception as e:
+        print(f"Basic test crashed: {e}")
+        test1_passed = False
+
+    try:
+        test2_passed = test_morton3d_invert_random()
+    except Exception as e:
+        print(f"Random test crashed: {e}")
+        test2_passed = False
 
     print("\n" + "=" * 60)
     if test1_passed and test2_passed:

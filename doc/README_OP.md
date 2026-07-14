@@ -533,8 +533,11 @@ cd test
 source env.sh
 sh build.sh --arch teco
 
-# 运行测试
+# 运行全部算子测试
 ./build/demo --gid=0
+
+# 运行指定算子的单条测例（用于开发调试，--perf_repeat 指定性能测试重复次数，--warm_repeat 指定预热次数）
+./build/demo --gid=0 --perf_repeat=50 --warm_repeat=3 --gtest_repeat=1 --case_path=zoo/teco/my_op/test_case/case_0.prototxt
 ```
 
 ## Proto 参数说明
