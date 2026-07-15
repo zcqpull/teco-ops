@@ -92,7 +92,6 @@ Teco-Ops/
 │   └── build.sh
 ├── python_api_test/        # Python API 接口测试脚本
 ├── plugin_test/            # Plugin 自定义算子推理测试脚本
-├── examples/               # 示例脚本
 ├── doc/                    # 文档
 │   ├── README_OP.md        # 算子开发指南
 │   ├── README_PYTHON.md    # Python 接口说明
@@ -131,7 +130,13 @@ Teco-Ops/
 
 ### 步骤三：C++ 接口算子自测
 
-使用项目内置的 C++ 测试框架进行算子精度和性能验证：
+1. 在项目根目录下构建算子库（TECO 架构）：
+
+```bash
+bash build.sh --build teco
+```
+
+2. 进入 test 目录，使用项目内置的 C++ 测试框架进行算子精度和性能验证：
 
 ```bash
 cd test
@@ -140,8 +145,11 @@ source env.sh
 # 构建所有算子测试
 sh build.sh --arch teco
 
-# 运行测试（通过 gid 参数指定核组号）
+# 运行全部算子测试（通过 gid 参数指定核组号）
 ./build/demo --gid=0
+
+# 运行指定算子的单条测例（--perf_repeat: 性能测试重复次数, --warm_repeat: 预热次数, --gtest_repeat: 测例重复次数）
+./build/demo --gid=0 --perf_repeat=50 --warm_repeat=3 --gtest_repeat=1 --case_path=zoo/teco/my_op/test_case/case_0.prototxt
 ```
 
 详细的测试框架使用说明请查阅 [算子开发指南](doc/README_OP.md) 和 [常见问题](doc/QA.md)。
@@ -160,6 +168,36 @@ pip install torch torch-sdaa
 WITH_TORCH=ON python setup.py build_ext --inplace
 ```
 
+`setup.py` 通过环境变量控制编译选项，`WITH_TORCH` 和 `WITH_INFERENCE_PLUGIN` 至少需要有一个为 `ON`：
+
+| `WITH_TORCH` | `WITH_INFERENCE_PLUGIN` | 产物 | 说明 |
+|---|---|---|---|
+| `ON` | `ON` | `libteco_ops.so` + torch ext + plugin | 完整构建（默认） |
+| `ON` | `OFF` | `libteco_ops.so` + torch ext | 仅 PyTorch 扩展 |
+| `OFF` | `ON` | `libteco_ops_plugin.so` + `libTecoInferPlugin.so` | 仅推理 Plugin |
+
+示例：
+
+```bash
+# 仅构建 PyTorch 扩展（不包含 Plugin）
+WITH_TORCH=ON WITH_INFERENCE_PLUGIN=OFF python setup.py build_ext --inplace
+
+# 仅构建推理 Plugin（不包含 torch 扩展）
+WITH_TORCH=OFF WITH_INFERENCE_PLUGIN=ON python setup.py build_ext --inplace
+```
+
+#### Wheel 编包
+
+执行以下命令可生成 wheel 分发包，产物位于 `dist/` 目录下：
+
+```bash
+# 生成 wheel 包
+WITH_TORCH=ON python setup.py bdist_wheel
+
+# 通过 pip 安装 wheel 包
+pip install dist/tecoops-*.whl
+```
+
 参考 [Python 接口说明](doc/README_PYTHON.md) 了解绑定方式和接口设计规范。
 
 ### 步骤五：Python API 接口自测
@@ -173,6 +211,15 @@ python python_api_test/test_flatten_rays.py
 
 **注意：** 使用 torch 扩展时，需先 `import torch` 再 `import tecoops`。
 
+本地开发调试时（`python setup.py build_ext --inplace`），编译产物位于 `api/tecoops/` 目录下，需使用以下方式临时导入：
+
+```python
+import torch
+import api.tecoops as tecoops
+```
+
+通过 wheel 包 `pip install` 安装后，则使用正常方式 `import tecoops`。
+
 ### 步骤六：Plugin 自定义算子开发与自测
 
 如需在推理场景中使用自定义算子，可在 `teco/plugin/` 目录下开发 Plugin 算子，并在 `plugin_test/` 目录下编写测试脚本。详见 [Plugin 自定义算子接口说明](doc/README_PLUGIN.md)。
@@ -181,8 +228,8 @@ python python_api_test/test_flatten_rays.py
 # 设置 TVM 路径环境变量
 export TECO_INFER_PLUGIN_UTIL_PATH=<tvm_package_path>
 
-# 构建（setup.py 自动执行两阶段构建）
-python setup.py build_ext --inplace
+# 仅构建推理 Plugin（设置 WITH_TORCH=OFF 可跳过 torch 扩展）
+WITH_TORCH=OFF WITH_INFERENCE_PLUGIN=ON python setup.py build_ext --inplace
 
 # 测试前设置库路径（需包含 libteco_ops_plugin.so 和 libTecoInferPlugin.so 所在目录）
 export LD_LIBRARY_PATH=<lib_path>:${LD_LIBRARY_PATH}
